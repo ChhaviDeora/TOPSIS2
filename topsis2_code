@@ -1,0 +1,49 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Sample data
+data = {
+    'Model': ['Model A', 'Model B', 'Model C'],
+    'Similarity': [0.75, 0.82, 0.79],
+}
+
+df = pd.DataFrame(data)
+
+# Normalize data
+normalized_data = df[['Similarity']].apply(lambda x: (x - x.min()) / (x.max() - x.min()))
+
+# Create weights for each criterion
+weights = [0.5]  # Adjust weights based on the importance of each criterion
+
+# Calculate weighted normalized decision matrix
+weighted_normalized_matrix = normalized_data * weights
+
+# Define ideal and negative-ideal solutions
+ideal_solution = np.max(weighted_normalized_matrix, axis=0)
+negative_ideal_solution = np.min(weighted_normalized_matrix, axis=0)
+
+# Calculate Euclidean distances to ideal and negative-ideal solutions
+distance_to_ideal = np.linalg.norm(weighted_normalized_matrix - ideal_solution, axis=1)
+distance_to_negative_ideal = np.linalg.norm(weighted_normalized_matrix - negative_ideal_solution, axis=1)
+
+# Calculate performance scores
+closeness = distance_to_negative_ideal / (distance_to_ideal + distance_to_negative_ideal)
+
+# Rank models based on closeness
+df['Closeness'] = closeness
+df['Rank'] = df['Closeness'].rank(ascending=False)
+
+# Display results
+print("Results:")
+print(df)
+
+# Plot bar chart for rankings
+fig, ax = plt.subplots()
+df[['Model', 'Closeness']].sort_values(by='Closeness').plot(kind='barh', x='Model', y='Closeness', ax=ax, legend=False, color='skyblue')
+ax.set_title('Model Rankings')
+ax.set_xlabel('Closeness Score')
+ax.set_ylabel('Model')
+
+# Show the plot
+plt.show()
